@@ -25,32 +25,39 @@ namespace SP_HW_5
         int sentCount;
         int wordsCount;
         int symCount;
-        int interroganiveCount;
+        int interrogativeCount;
         int exlamationCount;
         CancellationTokenSource tokenSource;
+        string Report;
         public Form1()
         {
             InitializeComponent();
             tokenSource = new CancellationTokenSource();
             richTextBox1.Text = text;
-            cText = text.ToCharArray();
             comboBox1.SelectedIndex = 0;
         }
 
         private void Start_btn_Click(object sender, EventArgs e)
         {
-            Task task = Task.Factory.StartNew(AnaliseText, tokenSource.Token, tokenSource.Token);
-            task.Wait();
-            if(comboBox1.SelectedIndex == 0)
+            Report = "";
+            text = richTextBox1.Text;
+            cText = text.ToCharArray();
+            if (!tokenSource.IsCancellationRequested)
             {
-                MessageBox.Show($"Sentences in the text : {sentCount}\nSymbols in the text : {symCount}\nWords in the text : {wordsCount}\n" +
-                $"Interrogative sentences : {interroganiveCount}\nExlamation sentences {exlamationCount}");
+                Task task = Task.Factory.StartNew(AnaliseText, tokenSource.Token, tokenSource.Token);
+                task.Wait();
+                performReport(Sentences_ckbx.Checked, Symbols_ckbx.Checked, Words_ckbx.Checked, Interrogative_ckbx.Checked, exlamed_ckbx.Checked);
+                if (comboBox1.SelectedIndex == 0)
+                {
+                    MessageBox.Show(Report);
+                }
+                else if (comboBox1.SelectedIndex == 1)
+                {
+                    PrintReport();
+                }
+                task.Dispose();
             }
-           else if(comboBox1.SelectedIndex == 1)
-            {
-                PrintReport();
-            }
-            task.Dispose();
+            
         }
         private void AnaliseText(object c)
         {
@@ -59,7 +66,7 @@ namespace SP_HW_5
             sentCount = CountSentences();
             symCount = CountSymbols();
             wordsCount = CountWords();
-            interroganiveCount = CountInterrogative();
+            interrogativeCount = CountInterrogative();
             exlamationCount = CountExlamation();
 
         }
@@ -111,13 +118,26 @@ namespace SP_HW_5
                     {
                         using (StreamWriter sw = new StreamWriter(sd.FileName, false, System.Text.Encoding.Default))
                         {
-                            sw.WriteLine($"Sentences in the text : {sentCount}\nSymbols in the text : {symCount}\nWords in the text : {wordsCount}\n" +
-                            $"Interrogative sentences : {interroganiveCount}\nExlamation sentences {exlamationCount}");
+                            sw.WriteLine(Report);
                         }
                     }
                 }
                 catch { MessageBox.Show("Error!"); };
             }
+        }
+        private void performReport(bool Sentences, bool Symbols, bool Words, bool Interrogative, bool exlame)
+        {
+            if (Sentences) Report += $"Sentences in the text : {sentCount}\n";
+            if (Symbols) Report += $"Symbols in the text : {symCount}\n";
+            if (Words) Report += $"Words in the text : { wordsCount}\n";
+            if (Interrogative) Report += $"Interrogative sentences : {interrogativeCount}\n";
+            if (exlame) Report += $"Exlamation sentences {exlamationCount}";
+        }
+
+        private void Stop_btn_Click(object sender, EventArgs e)
+        {
+            tokenSource.Cancel();
+            tokenSource = new CancellationTokenSource();
         }
     }
 }
